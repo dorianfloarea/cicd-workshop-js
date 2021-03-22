@@ -5,7 +5,7 @@ const axios = require('axios').default,
 
 axios.post('http://f97075584da5.ngrok.io/pipeline/register', data)
      .then(() => {
-         console.log('Done!');
+         console.log('Done!', data);
      })
     .catch((error) => {
         console.log('Failed!', error);
