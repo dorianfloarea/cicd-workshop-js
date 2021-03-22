@@ -16,6 +16,3 @@ workflows:
   node-test-and-deploy:
     jobs:
       - prize
-      - deploy-docker:
-          requires:
-            - build-and-test
