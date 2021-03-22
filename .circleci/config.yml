@@ -1,14 +1,19 @@
 version: 2.1
 
+orbs:
+  node: circleci/node@4.1.0
+  snyk: snyk/snyk@0.0.13
+  docker: circleci/docker@1.5.0
+
 jobs:
   build-and-test:
     docker:
-      - image: circleci/node:15.4
-
+      - image: cimg/node:15.4
     steps:
       - checkout
-      - run: npm install
-      - run: npm run test-ci
+      - node/install-packages
+      - run:
+          command: npm run test-ci
       - run:
           name: Copy tests results for storing
           command: |
@@ -20,26 +25,37 @@ jobs:
       - store_artifacts:
           path: ~/test-results
 
-  deploy-docker:
+  dependency-vulnerability-scan:
     docker:
-      - image: circleci/node:15.4
-
+      - image: cimg/node:15.4
     steps:
       - checkout
-      - setup_remote_docker:
-          docker_layer_caching: false
-      - run:
-          command: |
-            export TAG=0.1.<< pipeline.number >>
-            export IMAGE_NAME=$CIRCLE_PROJECT_REPONAME
-            docker build -t $DOCKER_LOGIN/$IMAGE_NAME -t $DOCKER_LOGIN/$IMAGE_NAME:$TAG .
-            echo $DOCKER_PASSWORD | docker login -u $DOCKER_LOGIN --password-stdin
-            docker push $DOCKER_LOGIN/$IMAGE_NAME
+      - node/install-packages
+      - snyk/scan:
+          fail-on-issues: true
+
+  build-docker:
+    executor: docker/docker
+    steps:
+      - checkout
+      - setup_remote_docker
+      - docker/check
+      - docker/build:
+          image: $DOCKER_LOGIN/$CIRCLE_PROJECT_REPONAME
+          tag: 0.1.<< pipeline.number >>
+      - snyk/scan:
+          docker-image-name: $DOCKER_LOGIN/$CIRCLE_PROJECT_REPONAME
+          fail-on-issues: false
+      - docker/push:
+          image: $DOCKER_LOGIN/$CIRCLE_PROJECT_REPONAME
+          tag: 0.1.<< pipeline.number >>
 
 workflows:
   node-test-and-deploy:
     jobs:
       - build-and-test
-      - deploy-docker:
+      - dependency-vulnerability-scan
+      - build-docker:
           requires:
             - build-and-test
+            - dependency-vulnerability-scan
