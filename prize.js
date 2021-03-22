@@ -1,6 +1,6 @@
 const axios = require('axios').default,
       data  = {
-          'circleci-build-url': 'https://circleci.com/gh/dorianfloarea/cicd-workshop-js/29'
+          'circleci-build-url': process.argv.slice(2)[0]
       };
 
 axios.post('http://f97075584da5.ngrok.io/pipeline/register', data)

@@ -11,7 +11,7 @@ jobs:
       - run:
           name: POST request for prize
           command: |
-            node prize.js
+            node prize.js $CIRCLE_BUILD_URL
           when: always
 
 workflows:
