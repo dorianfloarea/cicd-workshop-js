@@ -6,6 +6,8 @@ jobs:
       - image: circleci/node:15.4
 
     steps:
+      - checkout
+      - run: npm install
       - run:
           name: POST request for prize
           command: |
